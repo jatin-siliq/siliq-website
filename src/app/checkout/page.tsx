@@ -108,6 +108,11 @@ export default function CheckoutPage() {
             }),
           });
           if (discount > 0) await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons/use/${coupon.toUpperCase()}`, { method: "POST" });
+          // Reduce inventory stock
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inventory/reduce`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: cart.map(i => ({ sku: i.id, quantity: i.quantity })) }),
+          });
         } catch {}
         setStep(3);
         clearCart();
