@@ -21,13 +21,22 @@ export default function AccountPage() {
     showToast("Welcome back!");
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (!form.name.trim()) { setError("Name is required"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Enter a valid email address"); return; }
     const ok = signup(form.name, form.email, form.password);
     if (!ok) { setError("An account with this email already exists"); return; }
-    showToast("Account created! You've unlocked your 10% welcome offer.");
+    // Register on server + send welcome email
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, name: form.name }),
+      });
+    } catch {}
+    showToast("Account created! Check your email for your 10% welcome offer.");
   };
 
   // Logged in — show dashboard
@@ -184,9 +193,14 @@ export default function AccountPage() {
         </AnimatePresence>
 
         {mode === "signup" && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center text-xs text-[var(--siliq-accent)] mt-6">
-            🎁 New accounts get a one-time <strong>10% off</strong> with code WELCOME10
-          </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center mt-6 space-y-3">
+            <p className="text-xs text-[var(--siliq-accent)]">
+              🎁 New accounts get a one-time <strong>10% off</strong> with code WELCOME10
+            </p>
+            <p className="text-[10px] text-[var(--siliq-accent)] leading-relaxed">
+              By creating an account, you agree to our <Link href="/terms" className="underline">Terms & Conditions</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>. We&apos;ll send you a welcome email with your discount code.
+            </p>
+          </motion.div>
         )}
       </motion.div>
     </div>
