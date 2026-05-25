@@ -180,16 +180,20 @@ export default function AccountPage() {
 
   // Login/Signup page
   return (
-    <div className="min-h-[70vh] flex items-center justify-center py-16 px-6 relative overflow-hidden">
-      {/* Elegant background effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.03, 0.06, 0.03] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-[var(--siliq-black)]" />
-        <motion.div animate={{ scale: [1.2, 1, 1.2], opacity: [0.02, 0.05, 0.02] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} className="absolute bottom-1/4 -right-32 w-80 h-80 rounded-full bg-[var(--siliq-black)]" />
+    <div className="min-h-[70vh] grid lg:grid-cols-2">
+      {/* Left — Image (desktop only) */}
+      <div className="hidden lg:block relative overflow-hidden bg-[var(--siliq-pearl)]">
+        <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=1200&fit=crop" alt="SILIQ Silver Jewellery" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute bottom-12 left-12 right-12 z-10">
+          <p className="text-white/70 text-xs tracking-[0.2em] uppercase mb-2">Handcrafted in 925 Silver</p>
+          <h2 className="text-white font-display text-3xl font-light">Timeless Elegance,<br />Everyday Luxury</h2>
+        </div>
       </div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md relative">
-        {/* Subtle border glow */}
-        <div className="absolute -inset-[1px] bg-gradient-to-b from-[var(--siliq-line)] via-transparent to-[var(--siliq-line)] rounded-sm opacity-50" />
-        <div className="relative bg-white p-8 sm:p-10">
+
+      {/* Right — Form */}
+      <div className="flex items-center justify-center py-16 px-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }}>
               <User className="w-8 h-8 mx-auto mb-4 text-[var(--siliq-accent)]" strokeWidth={1.2} />
@@ -245,8 +249,8 @@ export default function AccountPage() {
               </p>
             </motion.div>
           )}
-        </div>
         </motion.div>
       </div>
+    </div>
   );
 }
