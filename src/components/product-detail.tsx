@@ -54,7 +54,7 @@ export function ProductDetail({ slug }: { slug: string }) {
             </div>
             {/* Main Image */}
             <div
-              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group rounded-lg"
+              className="flex-1 aspect-[3/4] overflow-hidden relative group rounded-lg"
               onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset.touchX = String(e.touches[0].clientX); }}
               onTouchEnd={(e) => {
                 const diff = Number((e.currentTarget as HTMLElement).dataset.touchX || 0) - e.changedTouches[0].clientX;
