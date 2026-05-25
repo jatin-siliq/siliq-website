@@ -4,7 +4,7 @@ import { products } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Star, Truck, RotateCcw, Shield, Minus, Plus } from "lucide-react";
+import { Heart, Star, Truck, RotateCcw, Shield, Minus, Plus, Share2 } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -42,27 +42,48 @@ export function ProductDetail({ slug }: { slug: string }) {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Image Gallery */}
           <div className="flex gap-4">
-            <div className="flex flex-col gap-3">
+            {/* Thumbnails (desktop) */}
+            <div className="hidden md:flex flex-col gap-3">
               {product.images.map((img, i) => (
-                <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-20 overflow-hidden border-2 transition-colors ${i === selectedImage ? "border-[var(--siliq-black)]" : "border-transparent"}`}>
+                <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-20 overflow-hidden border-2 transition-all duration-300 ${i === selectedImage ? "border-[var(--siliq-black)] scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}>
                   <Image src={img} alt="" width={64} height={80} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
-            <div className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative">
+            {/* Main Image */}
+            <div
+              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group touch-pan-y"
+              onTouchStart={(e) => { const t = e.touches[0]; (e.currentTarget as HTMLElement).dataset.touchX = String(t.clientX); }}
+              onTouchEnd={(e) => {
+                const startX = Number((e.currentTarget as HTMLElement).dataset.touchX || 0);
+                const endX = e.changedTouches[0].clientX;
+                const diff = startX - endX;
+                if (Math.abs(diff) > 50) {
+                  if (diff > 0 && selectedImage < product.images.length - 1) setSelectedImage(selectedImage + 1);
+                  if (diff < 0 && selectedImage > 0) setSelectedImage(selectedImage - 1);
+                }
+              }}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedImage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, scale: 1.02 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
                   className="absolute inset-0"
                 >
-                  <Image src={product.images[selectedImage]} alt={product.name} width={600} height={750} className="w-full h-full object-cover" />
+                  <Image src={product.images[selectedImage]} alt={product.name} width={600} height={750} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                 </motion.div>
               </AnimatePresence>
+              {/* Image dots (mobile) */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
+                {product.images.map((_, i) => (
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-2 h-2 rounded-full transition-all duration-300 ${i === selectedImage ? "bg-[var(--siliq-black)] w-4" : "bg-[var(--siliq-black)]/30"}`} />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -120,10 +141,16 @@ export function ProductDetail({ slug }: { slug: string }) {
                   Out of Stock
                 </button>
               ) : (
-                <button onClick={handleAddToCart} className="flex-1 py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors disabled:opacity-50" disabled={!!product.sizes && !selectedSize}>Add to Bag</button>
+                <>
+                  <button onClick={handleAddToCart} className="flex-1 py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors disabled:opacity-50" disabled={!!product.sizes && !selectedSize}>Add to Bag</button>
+                  <button onClick={() => { handleAddToCart(); window.location.href = "/checkout"; }} className="flex-1 py-4 border-2 border-[var(--siliq-black)] text-[var(--siliq-black)] text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-black)] hover:text-white transition-colors disabled:opacity-50" disabled={!!product.sizes && !selectedSize}>Buy Now</button>
+                </>
               )}
               <button onClick={() => toggleWishlist(product)} className={`w-14 h-14 flex items-center justify-center border transition-colors ${wishlisted ? "bg-red-50 border-red-200" : "border-[var(--siliq-line)] hover:border-[var(--siliq-black)]"}`} aria-label="Wishlist">
                 <Heart className={`w-5 h-5 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
+              </button>
+              <button onClick={() => { if (navigator.share) navigator.share({ title: product.name, text: product.description, url: window.location.href }); else navigator.clipboard.writeText(window.location.href).then(() => alert("Link copied!")); }} className="w-14 h-14 flex items-center justify-center border border-[var(--siliq-line)] hover:border-[var(--siliq-black)] transition-colors" aria-label="Share">
+                <Share2 className="w-5 h-5" />
               </button>
             </div>
 
