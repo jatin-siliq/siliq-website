@@ -180,7 +180,7 @@ export default function AccountPage() {
 
   // Login/Signup page
   return (
-    <div className="min-h-[70vh] grid lg:grid-cols-2">
+    <div className="min-h-[70vh] grid lg:grid-cols-2 lg:h-[700px]">
       {/* Left — Image (desktop only) */}
       <div className="hidden lg:block relative overflow-hidden bg-[var(--siliq-pearl)]" key="login-image">
         <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=1200&fit=crop" alt="SILIQ Silver Jewellery" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
