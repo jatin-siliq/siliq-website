@@ -3,8 +3,11 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, LogOut, Package, Tag, MapPin } from "lucide-react";
+import { User, LogOut, Package, Tag, MapPin, Heart, Shield, Sparkles, Gift } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const ShaderAnimation = dynamic(() => import("@/components/ui/shader-animation").then(m => ({ default: m.ShaderAnimation })), { ssr: false });
 
 export default function AccountPage() {
   const { user, isLoggedIn, login, signup, logout, deleteAddress } = useAuth();
@@ -12,6 +15,7 @@ export default function AccountPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,22 +28,46 @@ export default function AccountPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
     if (!form.name.trim()) { setError("Name is required"); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Enter a valid email address"); return; }
+    if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
     const ok = signup(form.name, form.email, form.password);
     if (!ok) { setError("An account with this email already exists"); return; }
-    // Register on server + send welcome email
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, name: form.name }),
       });
     } catch {}
-    showToast("Account created! Check your email for your 10% welcome offer.");
+    setShowSuccess(true);
+    showToast("Account created! Check your email for your welcome offer.");
   };
 
-  // Logged in — show dashboard
+  // Success animation after signup
+  if (showSuccess) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-30"><ShaderAnimation /></div>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} className="relative z-10 text-center max-w-md">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }} className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
+            <Sparkles className="w-10 h-10 text-green-600" />
+          </motion.div>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="font-display text-4xl font-light mb-3">Welcome to SILIQ</motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="text-sm text-[var(--siliq-graphite)] mb-6">Your account is ready. We&apos;ve sent a welcome email with your exclusive 10% discount code.</motion.p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="bg-[var(--siliq-pearl)] border border-[var(--siliq-line)] p-4 mb-8">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--siliq-accent)] mb-1">Your welcome code</p>
+            <p className="text-2xl font-medium tracking-[0.15em]">WELCOME10</p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }} className="flex gap-3 justify-center">
+            <Link href="/shop" className="px-8 py-3 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase">Shop Now</Link>
+            <button onClick={() => setShowSuccess(false)} className="px-8 py-3 border border-[var(--siliq-line)] text-xs tracking-[0.2em] uppercase">My Account</button>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Logged in dashboard
   if (isLoggedIn && user) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="min-h-[70vh] py-16 px-6">
@@ -54,13 +82,23 @@ export default function AccountPage() {
             </button>
           </div>
 
-          {/* Welcome Offer Status */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="border border-[var(--siliq-line)] p-6 mb-8"
-          >
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+            {[
+              { icon: Package, label: "Orders", href: "/track-order" },
+              { icon: Heart, label: "Wishlist", href: "/wishlist" },
+              { icon: Shield, label: "Care Guide", href: "/care-guide" },
+              { icon: Gift, label: "Refer & Earn", href: "/contact" },
+            ].map((item) => (
+              <Link key={item.label} href={item.href} className="border border-[var(--siliq-line)] p-4 text-center hover:border-[var(--siliq-black)] transition-colors">
+                <item.icon className="w-5 h-5 mx-auto mb-2 text-[var(--siliq-accent)]" strokeWidth={1.2} />
+                <p className="text-[10px] tracking-[0.15em] uppercase">{item.label}</p>
+              </Link>
+            ))}
+          </div>
+
+          {/* Welcome Offer */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="border border-[var(--siliq-line)] p-6 mb-8">
             <div className="flex items-center gap-3 mb-2">
               <Tag className="w-4 h-4 text-[var(--siliq-accent)]" />
               <h3 className="text-sm font-medium tracking-[0.1em] uppercase">Welcome Offer — WELCOME10</h3>
@@ -103,11 +141,9 @@ export default function AccountPage() {
 
           {/* Saved Addresses */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 text-[var(--siliq-accent)]" />
-                <h3 className="text-sm font-medium tracking-[0.1em] uppercase">Saved Addresses</h3>
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <MapPin className="w-4 h-4 text-[var(--siliq-accent)]" />
+              <h3 className="text-sm font-medium tracking-[0.1em] uppercase">Saved Addresses</h3>
             </div>
             {user.addresses.length === 0 ? (
               <div className="border border-[var(--siliq-line)] p-8 text-center">
@@ -129,80 +165,89 @@ export default function AccountPage() {
               </div>
             )}
           </motion.div>
+
+          {/* Care Tips */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-8 bg-[var(--siliq-pearl)] p-6">
+            <h3 className="text-sm font-medium tracking-[0.1em] uppercase mb-3">💎 Care Tips for Your Silver</h3>
+            <ul className="space-y-2 text-xs text-[var(--siliq-graphite)]">
+              <li>• Store in the SILIQ pouch when not wearing</li>
+              <li>• Wipe gently with the polishing cloth after each wear</li>
+              <li>• Remove before swimming, showering, or applying perfume</li>
+              <li>• <Link href="/care-guide" className="underline">Read full care guide →</Link></li>
+            </ul>
+          </motion.div>
         </div>
       </motion.div>
     );
   }
 
-  // Not logged in — show login/signup
+  // Login/Signup page with shader animation
   return (
-    <div className="min-h-[70vh] flex items-center justify-center py-16 px-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <User className="w-8 h-8 mx-auto mb-4 text-[var(--siliq-accent)]" strokeWidth={1.2} />
-          <h1 className="font-display text-3xl font-light">{mode === "login" ? "Welcome Back" : "Create Account"}</h1>
-          <p className="text-sm text-[var(--siliq-accent)] mt-2">
-            {mode === "login" ? "Sign in to your SILIQ account" : "Sign up and get 10% off your first order"}
-          </p>
+    <div className="min-h-[70vh] grid lg:grid-cols-2">
+      {/* Left — Shader Animation (desktop only) */}
+      <div className="hidden lg:flex relative items-center justify-center overflow-hidden">
+        <ShaderAnimation />
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-white text-center px-12">
+          <Sparkles className="w-8 h-8 mb-4 opacity-80" />
+          <h2 className="font-display text-4xl font-light mb-3">SILIQ</h2>
+          <p className="text-sm opacity-70 max-w-xs">Handcrafted 925 sterling silver jewellery. Timeless pieces for everyday elegance.</p>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-[var(--siliq-line)] mb-8">
-          {(["login", "signup"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => { setMode(tab); setError(""); }}
-              className={`flex-1 py-3 text-xs tracking-[0.15em] uppercase transition-colors ${mode === tab ? "text-[var(--siliq-black)] border-b-2 border-[var(--siliq-black)]" : "text-[var(--siliq-accent)]"}`}
-            >
-              {tab === "login" ? "Sign In" : "Sign Up"}
-            </button>
-          ))}
-        </div>
+      {/* Right — Form */}
+      <div className="flex items-center justify-center py-16 px-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <User className="w-8 h-8 mx-auto mb-4 text-[var(--siliq-accent)]" strokeWidth={1.2} />
+            <h1 className="font-display text-3xl font-light">{mode === "login" ? "Welcome Back" : "Create Account"}</h1>
+            <p className="text-sm text-[var(--siliq-accent)] mt-2">
+              {mode === "login" ? "Sign in to your SILIQ account" : "Sign up and get 10% off your first order"}
+            </p>
+          </div>
 
-        <AnimatePresence mode="wait">
-          <motion.form
-            key={mode}
-            initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
-            transition={{ duration: 0.25 }}
-            onSubmit={mode === "login" ? handleLogin : handleSignup}
-            className="space-y-5"
-          >
-            {mode === "signup" && (
+          <div className="flex border-b border-[var(--siliq-line)] mb-8">
+            {(["login", "signup"] as const).map((tab) => (
+              <button key={tab} onClick={() => { setMode(tab); setError(""); }} className={`flex-1 py-3 text-xs tracking-[0.15em] uppercase transition-colors ${mode === tab ? "text-[var(--siliq-black)] border-b-2 border-[var(--siliq-black)]" : "text-[var(--siliq-accent)]"}`}>
+                {tab === "login" ? "Sign In" : "Sign Up"}
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.form key={mode} initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }} transition={{ duration: 0.25 }} onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-5">
+              {mode === "signup" && (
+                <div>
+                  <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Full Name</label>
+                  <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="Your full name" />
+                </div>
+              )}
               <div>
-                <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Name</label>
-                <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="Your name" />
+                <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Email Address</label>
+                <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="you@example.com" />
               </div>
-            )}
-            <div>
-              <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Email</label>
-              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="you@example.com" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Password</label>
-              <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="••••••••" />
-            </div>
+              <div>
+                <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Password</label>
+                <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="••••••••" />
+              </div>
 
-            {error && <p className="text-xs text-red-600">{error}</p>}
+              {error && <p className="text-xs text-red-600">{error}</p>}
 
-            <button type="submit" className="w-full py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors">
-              {mode === "login" ? "Sign In" : "Create Account"}
-            </button>
-          </motion.form>
-        </AnimatePresence>
+              <button type="submit" className="w-full py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors">
+                {mode === "login" ? "Sign In" : "Create Account"}
+              </button>
+            </motion.form>
+          </AnimatePresence>
 
-        {mode === "signup" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center mt-6 space-y-3">
-            <p className="text-xs text-[var(--siliq-accent)]">
-              🎁 New accounts get a one-time <strong>10% off</strong> with code WELCOME10
-            </p>
-            <p className="text-[10px] text-[var(--siliq-accent)] leading-relaxed">
-              By creating an account, you agree to our <Link href="/terms" className="underline">Terms & Conditions</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>. We&apos;ll send you a welcome email with your discount code.
-            </p>
-          </motion.div>
-        )}
-      </motion.div>
+          {mode === "signup" && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center mt-6 space-y-3">
+              <p className="text-xs text-[var(--siliq-accent)]">🎁 New accounts get <strong>10% off</strong> with code WELCOME10</p>
+              <p className="text-[10px] text-[var(--siliq-accent)] leading-relaxed">
+                By creating an account, you agree to our <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>.
+              </p>
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }
