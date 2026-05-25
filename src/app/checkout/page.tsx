@@ -32,6 +32,17 @@ export default function CheckoutPage() {
   const applyCoupon = async () => {
     setCouponError("");
     const code = coupon.toUpperCase();
+    // Check if customer already used this coupon
+    if (shipping.email) {
+      try {
+        const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${shipping.email}/can-use-coupon`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const checkData = await checkRes.json();
+        if (!checkData.canUse) { setCouponError(checkData.message || "You've already used this coupon"); return; }
+      } catch {}
+    }
     // WELCOME10 special handling for logged-in users
     if (code === "WELCOME10") {
       if (!isLoggedIn) { setCouponError("Please login to use this coupon"); return; }
@@ -112,6 +123,24 @@ export default function CheckoutPage() {
           await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inventory/reduce`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items: cart.map(i => ({ sku: i.id, quantity: i.quantity })) }),
+          });
+          // Sync customer data
+          const customerEmail = shipping.email;
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: customerEmail, name: `${shipping.firstName} ${shipping.lastName}`, phone: shipping.phone }),
+          });
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/address`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ label: "Home", firstName: shipping.firstName, lastName: shipping.lastName, phone: shipping.phone, address: shipping.address, address2: shipping.address2, city: shipping.city, state: shipping.state, pincode: shipping.pincode }),
+          });
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/order`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ total }),
+          });
+          if (discount > 0) await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/used-coupon`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: coupon.toUpperCase() }),
           });
         } catch {}
         setStep(3);
