@@ -5,9 +5,6 @@ import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, LogOut, Package, Tag, MapPin, Heart, Shield, Sparkles, Gift } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-const ShaderAnimation = dynamic(() => import("@/components/ui/shader-animation").then(m => ({ default: m.ShaderAnimation })), { ssr: false });
 
 export default function AccountPage() {
   const { user, isLoggedIn, login, signup, logout, deleteAddress } = useAuth();
@@ -47,7 +44,6 @@ export default function AccountPage() {
   if (showSuccess) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30"><ShaderAnimation /></div>
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} className="relative z-10 text-center max-w-md">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }} className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
             <Sparkles className="w-10 h-10 text-green-600" />
@@ -181,22 +177,10 @@ export default function AccountPage() {
     );
   }
 
-  // Login/Signup page with shader animation
+  // Login/Signup page
   return (
-    <div className="min-h-[70vh] grid lg:grid-cols-2">
-      {/* Left — Shader Animation (desktop only) */}
-      <div className="hidden lg:flex relative items-center justify-center overflow-hidden">
-        <ShaderAnimation />
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-white text-center px-12">
-          <Sparkles className="w-8 h-8 mb-4 opacity-80" />
-          <h2 className="font-display text-4xl font-light mb-3">SILIQ</h2>
-          <p className="text-sm opacity-70 max-w-xs">Handcrafted 925 sterling silver jewellery. Timeless pieces for everyday elegance.</p>
-        </div>
-      </div>
-
-      {/* Right — Form */}
-      <div className="flex items-center justify-center py-16 px-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
+    <div className="min-h-[70vh] flex items-center justify-center py-16 px-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <User className="w-8 h-8 mx-auto mb-4 text-[var(--siliq-accent)]" strokeWidth={1.2} />
             <h1 className="font-display text-3xl font-light">{mode === "login" ? "Welcome Back" : "Create Account"}</h1>
