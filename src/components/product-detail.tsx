@@ -194,7 +194,33 @@ export function ProductDetail({ slug }: { slug: string }) {
                         {/* Description - expandable */}
                         <div>
                           <p className={`text-sm text-[var(--siliq-graphite)] leading-relaxed ${showFullDesc ? "" : "line-clamp-2"}`}>{product.description}</p>
-                          <button onClick={() => setShowFullDesc(!showFullDesc)} className="text-xs text-[var(--siliq-black)] font-medium mt-2 underline underline-offset-2">
+                          {showFullDesc && (
+                            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                              {product.details.filter(d => !d.startsWith("SKU:")).length > 0 && (
+                                <div>
+                                  <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">Highlights</h4>
+                                  <ul className="space-y-1.5">
+                                    {product.details.filter(d => !d.startsWith("SKU:")).map((d, i) => (
+                                      <li key={i} className="flex items-center gap-2">
+                                        <span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />
+                                        <span className="text-xs">{d}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">{"What's Included"}</h4>
+                                <ul className="space-y-1.5 text-xs text-[var(--siliq-graphite)]">
+                                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Premium SILIQ packaging box</li>
+                                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Authenticity certificate</li>
+                                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Silver polishing cloth</li>
+                                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Care instruction card</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                          <button onClick={() => setShowFullDesc(!showFullDesc)} className="text-xs text-[var(--siliq-black)] font-medium mt-3 underline underline-offset-2">
                             {showFullDesc ? "Show less" : "Read more"}
                           </button>
                         </div>
@@ -227,32 +253,6 @@ export function ProductDetail({ slug }: { slug: string }) {
                             </div>
                           </div>
                         )}
-
-                        {/* Highlights + What's Included side by side */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                          {product.details.filter(d => !d.startsWith("SKU:")).length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">Highlights</h4>
-                              <ul className="space-y-1.5">
-                                {product.details.filter(d => !d.startsWith("SKU:")).map((d, i) => (
-                                  <li key={i} className="flex items-center gap-2">
-                                    <span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />
-                                    <span className="text-xs">{d}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          <div>
-                            <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">{"What's Included"}</h4>
-                            <ul className="space-y-1.5 text-xs text-[var(--siliq-graphite)]">
-                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Premium SILIQ packaging box</li>
-                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Authenticity certificate</li>
-                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Silver polishing cloth</li>
-                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Care instruction card</li>
-                            </ul>
-                          </div>
-                        </div>
                       </div>
                     )}
                     {tab === "care" && (
