@@ -1,0 +1,5 @@
+{
+  "name": "skilled",
+  "description": "Default agent with all installed skills",
+  "resources": ["skill://.kiro/skills/**/SKILL.md"]
+}
