@@ -73,7 +73,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                   transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
                   className="absolute inset-0"
                 >
-                  <Image src={product.images[selectedImage]} alt={product.name} width={600} height={750} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                  <Image src={product.images[selectedImage]} alt={product.name} width={600} height={750} className="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105" />
                 </motion.div>
               </AnimatePresence>
               {/* Arrows */}
