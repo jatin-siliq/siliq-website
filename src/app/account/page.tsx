@@ -213,7 +213,7 @@ export default function AccountPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.form key={mode} initial={{ opacity: 0, x: mode === "login" ? -10 : 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: mode === "login" ? 10 : -10 }} transition={{ duration: 0.15 }} onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-5">
+            <motion.form key={mode} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }} onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-5">
               {mode === "signup" && (
                 <div>
                   <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Full Name</label>
