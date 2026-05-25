@@ -47,14 +47,14 @@ export function ProductDetail({ slug }: { slug: string }) {
             {/* Thumbnails on side */}
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
               {product.images.map((img, i) => (
-                <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-16 overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${i === selectedImage ? "border-[var(--siliq-black)] scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}>
+                <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-16 overflow-hidden border-2 rounded-md transition-all duration-300 flex-shrink-0 ${i === selectedImage ? "border-[var(--siliq-black)] scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}>
                   <Image src={img} alt="" width={56} height={64} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
             {/* Main Image */}
             <div
-              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group"
+              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group rounded-lg"
               onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset.touchX = String(e.touches[0].clientX); }}
               onTouchEnd={(e) => {
                 const diff = Number((e.currentTarget as HTMLElement).dataset.touchX || 0) - e.changedTouches[0].clientX;
