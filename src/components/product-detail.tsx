@@ -15,6 +15,7 @@ export function ProductDetail({ slug }: { slug: string }) {
   const [selectedSize, setSelectedSize] = useState("");
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"description" | "care" | "shipping">("description");
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
   if (!product) return (
     <div className="min-h-[60vh] flex items-center justify-center">
@@ -117,7 +118,6 @@ export function ProductDetail({ slug }: { slug: string }) {
               )}
             </div>
             <p className="text-xs text-[var(--siliq-accent)] mt-1">Inclusive of all taxes</p>
-            <p className="text-sm text-[var(--siliq-graphite)] leading-relaxed mt-6">{product.description}</p>
 
             {product.sizes && (
               <div className="mt-6">
@@ -191,8 +191,13 @@ export function ProductDetail({ slug }: { slug: string }) {
                   >
                     {tab === "description" && (
                       <div className="space-y-6">
-                        {/* Description */}
-                        <p className="text-sm text-[var(--siliq-graphite)] leading-relaxed">{product.description}</p>
+                        {/* Description - expandable */}
+                        <div>
+                          <p className={`text-sm text-[var(--siliq-graphite)] leading-relaxed ${showFullDesc ? "" : "line-clamp-2"}`}>{product.description}</p>
+                          <button onClick={() => setShowFullDesc(!showFullDesc)} className="text-xs text-[var(--siliq-black)] font-medium mt-2 underline underline-offset-2">
+                            {showFullDesc ? "Show less" : "Read more"}
+                          </button>
+                        </div>
 
                         {/* Specs */}
                         {product.specs && Object.values(product.specs).some(v => v) && (
