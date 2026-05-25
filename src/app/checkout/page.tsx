@@ -122,7 +122,7 @@ export default function CheckoutPage() {
           // Reduce inventory stock
           await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inventory/reduce`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: cart.map(i => ({ sku: i.id, quantity: i.quantity })) }),
+            body: JSON.stringify({ items: cart.map(i => ({ sku: i.product.id, quantity: i.quantity })) }),
           });
           // Sync customer data
           const customerEmail = shipping.email;
