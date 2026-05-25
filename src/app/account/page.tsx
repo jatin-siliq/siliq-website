@@ -26,7 +26,8 @@ export default function AccountPage() {
     e.preventDefault();
     setError("");
     if (!form.name.trim()) { setError("Name is required"); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Enter a valid email address"); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) { setError("Enter a valid email address"); return; }
     if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
     const ok = signup(form.name, form.email, form.password);
     if (!ok) { setError("An account with this email already exists"); return; }
@@ -224,14 +225,17 @@ export default function AccountPage() {
 
           {mode === "signup" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center mt-6 space-y-3">
-              <p className="text-xs text-[var(--siliq-accent)]">🎁 New accounts get <strong>10% off</strong> with code WELCOME10</p>
+              <p className="text-xs text-[var(--siliq-accent)]">{"🎁 New accounts get "}<strong>10% off</strong>{" with code WELCOME10"}</p>
               <p className="text-[10px] text-[var(--siliq-accent)] leading-relaxed">
-                By creating an account, you agree to our <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>.
+                {"By creating an account, you agree to our "}
+                <Link href="/terms" className="underline">Terms</Link>
+                {" and "}
+                <Link href="/privacy" className="underline">Privacy Policy</Link>
+                {"."}
               </p>
             </motion.div>
           )}
         </motion.div>
       </div>
-    </div>
   );
 }
