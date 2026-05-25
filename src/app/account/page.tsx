@@ -182,8 +182,8 @@ export default function AccountPage() {
   return (
     <div className="min-h-[70vh] grid lg:grid-cols-2">
       {/* Left — Image (desktop only) */}
-      <div className="hidden lg:block relative overflow-hidden bg-[var(--siliq-pearl)]">
-        <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=1200&fit=crop" alt="SILIQ Silver Jewellery" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="hidden lg:block relative overflow-hidden bg-[var(--siliq-pearl)]" key="login-image">
+        <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=1200&fit=crop" alt="SILIQ Silver Jewellery" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute bottom-12 left-12 right-12 z-10">
           <p className="text-white/70 text-xs tracking-[0.2em] uppercase mb-2">Handcrafted in 925 Silver</p>
@@ -213,7 +213,7 @@ export default function AccountPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.form key={mode} initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }} transition={{ duration: 0.25 }} onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-5">
+            <motion.form key={mode} initial={{ opacity: 0, x: mode === "login" ? -10 : 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: mode === "login" ? 10 : -10 }} transition={{ duration: 0.15 }} onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-5">
               {mode === "signup" && (
                 <div>
                   <label className="block text-xs font-medium tracking-[0.1em] uppercase mb-2">Full Name</label>
