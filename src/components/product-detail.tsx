@@ -190,14 +190,17 @@ export function ProductDetail({ slug }: { slug: string }) {
                     transition={{ duration: 0.25 }}
                   >
                     {tab === "description" && (
-                      <div className="space-y-5">
+                      <div className="space-y-6">
+                        {/* Description */}
+                        <p className="text-sm text-[var(--siliq-graphite)] leading-relaxed">{product.description}</p>
+
+                        {/* Specs */}
                         {product.specs && Object.values(product.specs).some(v => v) && (
                           <div>
                             <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">Product Specifications</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                               {([
                                 ["Material", product.specs.material],
-                                ["Weight", product.specs.weight],
                                 ["Finish", product.specs.finish],
                                 ["Plating", product.specs.plating],
                                 ["Stone", product.specs.stone],
@@ -219,27 +222,31 @@ export function ProductDetail({ slug }: { slug: string }) {
                             </div>
                           </div>
                         )}
-                        {product.details.filter(d => !d.startsWith("SKU:")).length > 0 && (
+
+                        {/* Highlights + What's Included side by side */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          {product.details.filter(d => !d.startsWith("SKU:")).length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">Highlights</h4>
+                              <ul className="space-y-1.5">
+                                {product.details.filter(d => !d.startsWith("SKU:")).map((d, i) => (
+                                  <li key={i} className="flex items-center gap-2">
+                                    <span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />
+                                    <span className="text-xs">{d}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                           <div>
-                            <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">Highlights</h4>
-                            <ul className="space-y-1.5">
-                              {product.details.filter(d => !d.startsWith("SKU:")).map((d, i) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />
-                                  <span className="text-xs">{d}</span>
-                                </li>
-                              ))}
+                            <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">{"What's Included"}</h4>
+                            <ul className="space-y-1.5 text-xs text-[var(--siliq-graphite)]">
+                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Premium SILIQ packaging box</li>
+                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Authenticity certificate</li>
+                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Silver polishing cloth</li>
+                              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Care instruction card</li>
                             </ul>
                           </div>
-                        )}
-                        <div>
-                          <h4 className="text-xs font-medium tracking-[0.15em] uppercase text-[var(--siliq-black)] mb-3">What&apos;s Included</h4>
-                          <ul className="space-y-1.5 text-xs text-[var(--siliq-graphite)]">
-                            <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Premium SILIQ packaging box</li>
-                            <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Authenticity certificate</li>
-                            <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Silver polishing cloth</li>
-                            <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[var(--siliq-black)]" />Care instruction card</li>
-                          </ul>
                         </div>
                       </div>
                     )}
