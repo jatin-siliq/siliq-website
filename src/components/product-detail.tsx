@@ -43,23 +43,21 @@ export function ProductDetail({ slug }: { slug: string }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
-          <div className="flex gap-4">
-            {/* Thumbnails (desktop) */}
-            <div className="hidden md:flex flex-col gap-3">
+          <div className="flex gap-3">
+            {/* Thumbnails on side */}
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
               {product.images.map((img, i) => (
-                <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-20 overflow-hidden border-2 transition-all duration-300 ${i === selectedImage ? "border-[var(--siliq-black)] scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}>
-                  <Image src={img} alt="" width={64} height={80} className="w-full h-full object-cover" />
+                <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-16 overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${i === selectedImage ? "border-[var(--siliq-black)] scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}>
+                  <Image src={img} alt="" width={56} height={64} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
             {/* Main Image */}
             <div
-              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group touch-pan-y"
-              onTouchStart={(e) => { const t = e.touches[0]; (e.currentTarget as HTMLElement).dataset.touchX = String(t.clientX); }}
+              className="flex-1 aspect-[3/4] overflow-hidden bg-[var(--siliq-pearl)] relative group"
+              onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset.touchX = String(e.touches[0].clientX); }}
               onTouchEnd={(e) => {
-                const startX = Number((e.currentTarget as HTMLElement).dataset.touchX || 0);
-                const endX = e.changedTouches[0].clientX;
-                const diff = startX - endX;
+                const diff = Number((e.currentTarget as HTMLElement).dataset.touchX || 0) - e.changedTouches[0].clientX;
                 if (Math.abs(diff) > 50) {
                   if (diff > 0 && selectedImage < product.images.length - 1) setSelectedImage(selectedImage + 1);
                   if (diff < 0 && selectedImage > 0) setSelectedImage(selectedImage - 1);
@@ -78,10 +76,21 @@ export function ProductDetail({ slug }: { slug: string }) {
                   <Image src={product.images[selectedImage]} alt={product.name} width={600} height={750} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                 </motion.div>
               </AnimatePresence>
-              {/* Image dots (mobile) */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
+              {/* Arrows */}
+              {selectedImage > 0 && (
+                <button onClick={() => setSelectedImage(selectedImage - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white" aria-label="Previous">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+              )}
+              {selectedImage < product.images.length - 1 && (
+                <button onClick={() => setSelectedImage(selectedImage + 1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white" aria-label="Next">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              )}
+              {/* Dots (mobile) */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
                 {product.images.map((_, i) => (
-                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-2 h-2 rounded-full transition-all duration-300 ${i === selectedImage ? "bg-[var(--siliq-black)] w-4" : "bg-[var(--siliq-black)]/30"}`} />
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === selectedImage ? "bg-[var(--siliq-black)] w-3" : "bg-[var(--siliq-black)]/30"}`} />
                 ))}
               </div>
             </div>
