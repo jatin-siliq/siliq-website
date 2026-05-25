@@ -192,7 +192,7 @@ export default function AccountPage() {
       </div>
 
       {/* Right — Form */}
-      <div className="flex items-center justify-center py-16 px-6">
+      <div className="flex items-center justify-center py-16 px-6 lg:overflow-y-auto lg:h-[700px]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }}>
