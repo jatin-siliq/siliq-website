@@ -19,49 +19,64 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const SESSION_KEY = "siliq_session";
-const USERS_KEY = "siliq_users";
+const PASS_KEY = "siliq_passes"; // email->password map (local only for login verification)
 const API = process.env.NEXT_PUBLIC_API_URL || "https://siliq-api.onrender.com";
 
-// Local storage helpers for auth (passwords stay local, data syncs to Render)
-function getUsers(): Record<string, { name: string; password: string; welcomeOfferUsed: boolean; orders: Order[]; addresses: Address[] }> {
+function getPasswords(): Record<string, string> {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(USERS_KEY) || "{}"); } catch { return {}; }
-}
-function saveUsers(users: ReturnType<typeof getUsers>) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  try { return JSON.parse(localStorage.getItem(PASS_KEY) || "{}"); } catch { return {}; }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  // On mount, restore session from Render API
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const email = localStorage.getItem(SESSION_KEY);
+    const email = typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
     if (!email) return;
-    const users = getUsers();
-    const u = users[email];
-    if (u) setUser({ email, name: u.name, welcomeOfferUsed: u.welcomeOfferUsed, orders: u.orders || [], addresses: u.addresses || [] });
+    fetch(`${API}/api/customers/${encodeURIComponent(email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.found && data.customer) {
+          const c = data.customer;
+          setUser({ email: c.email, name: c.name || "", welcomeOfferUsed: (c.couponsUsed || []).includes("WELCOME10"), orders: c.orderHistory || [], addresses: c.addresses || [] });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const users = getUsers();
-    const u = users[email];
-    if (!u || u.password !== password) return false;
-    localStorage.setItem(SESSION_KEY, email);
-    setUser({ email, name: u.name, welcomeOfferUsed: u.welcomeOfferUsed, orders: u.orders || [], addresses: u.addresses || [] });
-    return true;
+    // Check password locally
+    const passes = getPasswords();
+    if (!passes[email] || passes[email] !== password) return false;
+    // Fetch user data from Render
+    try {
+      const res = await fetch(`${API}/api/customers/${encodeURIComponent(email)}`);
+      if (!res.ok) return false;
+      const { found, customer: c } = await res.json();
+      if (!found) return false;
+      localStorage.setItem(SESSION_KEY, email);
+      setUser({ email: c.email, name: c.name || "", welcomeOfferUsed: (c.couponsUsed || []).includes("WELCOME10"), orders: c.orderHistory || [], addresses: c.addresses || [] });
+      return true;
+    } catch { return false; }
   }, []);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
-    const users = getUsers();
-    if (users[email]) return false;
-    users[email] = { name, password, welcomeOfferUsed: false, orders: [], addresses: [] };
-    saveUsers(users);
-    localStorage.setItem(SESSION_KEY, email);
-    setUser({ email, name, welcomeOfferUsed: false, orders: [], addresses: [] });
-    // Sync to Render API
-    try { await fetch(`${API}/api/customers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, name }) }); } catch {}
-    return true;
+    // Check if already exists locally
+    const passes = getPasswords();
+    if (passes[email]) return false;
+    // Create on Render API
+    try {
+      const res = await fetch(`${API}/api/customers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, name }) });
+      if (!res.ok) return false;
+      const { customer: c } = await res.json();
+      // Save password locally
+      passes[email] = password;
+      localStorage.setItem(PASS_KEY, JSON.stringify(passes));
+      localStorage.setItem(SESSION_KEY, email);
+      setUser({ email: c.email, name: c.name, welcomeOfferUsed: false, orders: [], addresses: [] });
+      return true;
+    } catch { return false; }
   }, []);
 
   const logout = useCallback(() => {
@@ -71,35 +86,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const markWelcomeOfferUsed = useCallback(() => {
     if (!user) return;
-    const users = getUsers();
-    if (users[user.email]) { users[user.email].welcomeOfferUsed = true; saveUsers(users); }
     setUser(prev => prev ? { ...prev, welcomeOfferUsed: true } : null);
+    // Sync to Render
+    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/used-coupon`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "WELCOME10" }) }).catch(() => {});
   }, [user]);
 
   const addOrder = useCallback(async (order: Omit<Order, "id" | "date" | "status">) => {
     if (!user) return;
     const newOrder: Order = { ...order, id: "SILIQ-" + Date.now().toString().slice(-6), date: new Date().toLocaleDateString("en-IN"), status: "Processing" };
-    const users = getUsers();
-    if (users[user.email]) { users[user.email].orders = [...(users[user.email].orders || []), newOrder]; saveUsers(users); }
     setUser(prev => prev ? { ...prev, orders: [...prev.orders, newOrder] } : null);
   }, [user]);
 
   const saveAddress = useCallback(async (address: Omit<Address, "id">) => {
     if (!user) return;
     const newAddr: Address = { ...address, id: Date.now().toString() };
-    const users = getUsers();
-    if (users[user.email]) { users[user.email].addresses = [...(users[user.email].addresses || []), newAddr]; saveUsers(users); }
     setUser(prev => prev ? { ...prev, addresses: [...prev.addresses, newAddr] } : null);
     // Sync to Render
-    try { await fetch(`${API}/api/customers/${user.email}/address`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newAddr) }); } catch {}
+    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/address`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newAddr) }).catch(() => {});
   }, [user]);
 
   const deleteAddress = useCallback(async (id: string) => {
     if (!user) return;
-    const users = getUsers();
-    if (users[user.email]) { users[user.email].addresses = (users[user.email].addresses || []).filter(a => a.id !== id); saveUsers(users); }
     setUser(prev => prev ? { ...prev, addresses: prev.addresses.filter(a => a.id !== id) } : null);
-    try { await fetch(`${API}/api/customers/${user.email}/address/${id}`, { method: "DELETE" }); } catch {}
+    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/address/${id}`, { method: "DELETE" }).catch(() => {});
   }, [user]);
 
   return (
