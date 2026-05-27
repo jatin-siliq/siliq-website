@@ -13,12 +13,15 @@ export default function AccountPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const ok = login(form.email, form.password);
-    if (!ok) { setError("Invalid email or password"); return; }
+    setLoading(true);
+    const ok = await login(form.email, form.password);
+    setLoading(false);
+    if (!ok) { setError("Invalid email or password. Please try again."); return; }
     showToast("Welcome back!");
   };
 
@@ -29,14 +32,10 @@ export default function AccountPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) { setError("Enter a valid email address"); return; }
     if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
-    const ok = signup(form.name, form.email, form.password);
+    setLoading(true);
+    const ok = await signup(form.name, form.email, form.password);
+    setLoading(false);
     if (!ok) { setError("An account with this email already exists"); return; }
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, name: form.name }),
-      });
-    } catch {}
     setShowSuccess(true);
     showToast("Account created! Check your email for your welcome offer.");
   };
@@ -229,10 +228,14 @@ export default function AccountPage() {
                 <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-3 border border-[var(--siliq-line)] bg-transparent text-sm focus:border-[var(--siliq-black)] outline-none transition-colors" placeholder="••••••••" />
               </div>
 
-              {error && <p className="text-xs text-red-600">{error}</p>}
+              {error && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                  ⚠️ {error}
+                </motion.p>
+              )}
 
-              <button type="submit" className="w-full py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors">
-                {mode === "login" ? "Sign In" : "Create Account"}
+              <button type="submit" disabled={loading} className="w-full py-4 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase font-medium hover:bg-[var(--siliq-charcoal)] transition-colors disabled:opacity-60">
+                {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
               </button>
             </motion.form>
           </AnimatePresence>

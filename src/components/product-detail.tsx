@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
-import { products } from "@/lib/data";
+import { products, Product } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, Star, Truck, RotateCcw, Shield, Minus, Plus, Share2 } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
+import { RecentlyViewed, useTrackRecentlyViewed } from "@/components/recently-viewed";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function ProductDetail({ slug }: { slug: string }) {
@@ -16,6 +17,8 @@ export function ProductDetail({ slug }: { slug: string }) {
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"description" | "care" | "shipping">("description");
   const [showFullDesc, setShowFullDesc] = useState(false);
+
+  useTrackRecentlyViewed(product?.id ?? "");
 
   if (!product) return (
     <div className="min-h-[60vh] flex items-center justify-center">
@@ -324,6 +327,8 @@ export function ProductDetail({ slug }: { slug: string }) {
           </div>
         </section>
       )}
+
+      <RecentlyViewed currentProductId={product.id} />
     </>
   );
 }

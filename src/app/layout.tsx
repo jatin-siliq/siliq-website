@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { StoreProvider } from "@/lib/store";
 import { AuthProvider } from "@/lib/auth-store";
-import { ToastContainer } from "@/components/toast";
-import { CookieConsent } from "@/components/cookie-consent";
-import { WhatsAppWidget } from "@/components/whatsapp-widget";
 import { Analytics } from "@/components/analytics";
+import { LayoutShell } from "@/components/layout-shell";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["300", "400", "500", "600"] });
 const cormorant = Cormorant_Garamond({ variable: "--font-cormorant", subsets: ["latin"], weight: ["300", "400", "500", "600", "700"] });
@@ -55,12 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <StoreProvider>
           <AuthProvider>
-            <Navbar />
-            <main id="main-content" className="flex-1">{children}</main>
-            <Footer />
-            <ToastContainer />
-            <CookieConsent />
-            <WhatsAppWidget />
+            <LayoutShell>{children}</LayoutShell>
           </AuthProvider>
         </StoreProvider>
         <Analytics />

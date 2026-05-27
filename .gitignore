@@ -26,6 +26,7 @@
 
 # server data
 /.data/
+/data/
 
 # debug
 npm-debug.log*
