@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { products, Product } from "@/lib/data";
+import { Product } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import { useStore } from "@/lib/store";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { RecentlyViewed, useTrackRecentlyViewed } from "@/components/recently-vi
 import { motion, AnimatePresence } from "framer-motion";
 
 export function ProductDetail({ slug }: { slug: string }) {
+  const { products } = useProducts();
   const product = products.find((p) => p.slug === slug);
   const { addToCart, toggleWishlist, isInWishlist } = useStore();
   const [selectedImage, setSelectedImage] = useState(0);

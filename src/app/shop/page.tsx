@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { products, categories } from "@/lib/data";
+import { categories } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeader } from "@/components/section-header";
 import { AuroraBackground } from "@/components/ui/aurora-background";
@@ -11,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 function ShopContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { products } = useProducts();
 
   const category = searchParams.get("category") || "all";
   const tag = searchParams.get("tag") || "";

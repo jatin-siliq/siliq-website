@@ -3,6 +3,7 @@ import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AuthProvider } from "@/lib/auth-store";
+import { ProductsProvider } from "@/lib/products-provider";
 import { Analytics } from "@/components/analytics";
 import { LayoutShell } from "@/components/layout-shell";
 
@@ -51,7 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <StoreProvider>
           <AuthProvider>
-            <LayoutShell>{children}</LayoutShell>
+            <ProductsProvider>
+              <LayoutShell>{children}</LayoutShell>
+            </ProductsProvider>
           </AuthProvider>
         </StoreProvider>
         <Analytics />

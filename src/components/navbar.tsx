@@ -5,7 +5,7 @@ import { ShoppingBag, Heart, Search, Menu, X, ChevronDown, User } from "lucide-r
 import { useState, useMemo, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-store";
-import { products } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -30,6 +30,7 @@ const navLinks = [
 ];
 
 export function Navbar() {
+  const { products } = useProducts();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

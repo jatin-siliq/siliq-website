@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Product, products } from "@/lib/data";
+import { Product } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useAnimationControls } from "framer-motion";
@@ -27,6 +28,7 @@ export function useTrackRecentlyViewed(productId: string) {
 }
 
 export function RecentlyViewed({ currentProductId }: { currentProductId: string }) {
+  const { products } = useProducts();
   const [items, setItems] = useState<Product[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);

@@ -2,13 +2,12 @@
 import { motion } from "framer-motion";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { ProductCard } from "@/components/product-card";
-import { products } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import Link from "next/link";
 import Image from "next/image";
 import { Star, Sparkles, Moon } from "lucide-react";
 
 const celestialSlugs = ["orbital-resonance", "double-layer-star-flower", "starburst-crystal-blossom", "stellar-beam", "cosmic-pearl-charm-ring"];
-const celestialProducts = products.filter((p) => celestialSlugs.includes(p.slug));
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -16,6 +15,8 @@ const fadeUp = {
 };
 
 export default function CelestialPage() {
+  const { products } = useProducts();
+  const celestialProducts = products.filter((p) => celestialSlugs.includes(p.slug));
   return (
     <>
       {/* Hero — Full dark immersive */}

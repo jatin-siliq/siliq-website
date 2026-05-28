@@ -7,6 +7,7 @@ import { TestimonialSlider } from "@/components/testimonial-slider";
 import { MotionSection } from "@/components/motion-section";
 import { ImageGallery } from "@/components/ui/image-gallery";
 import { products, collections } from "@/lib/data";
+import { useProducts } from "@/lib/products-provider";
 import Link from "next/link";
 import Image from "next/image";
 import { Diamond, Truck, RotateCcw, Heart, Shield, Gift } from "lucide-react";
@@ -14,6 +15,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { motion } from "framer-motion";
 
 export default function Home() {
+  const { products } = useProducts();
   const bestsellers = products.filter((p) => p.isBestseller);
   const newArrivals = products.filter((p) => p.isNew);
 
