@@ -112,7 +112,7 @@ export default function CheckoutPage() {
           await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id, total, items: cart.reduce((s, i) => s + i.quantity, 0),
+              id, total, items: cart.map(i => ({ productName: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size })),
               paymentId: response.razorpay_payment_id,
               customer: { name: `${shipping.firstName} ${shipping.lastName}`, email: shipping.email, phone: shipping.phone },
               shipping, coupon: discount > 0 ? coupon.toUpperCase() : null,
