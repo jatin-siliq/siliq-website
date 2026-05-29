@@ -60,7 +60,7 @@ export default function Home() {
                 width={800}
                 height={400}
                 priority
-                className="h-56 sm:h-64 md:h-80 lg:h-[26rem] xl:h-[30rem] w-auto mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+                className="h-72 sm:h-80 md:h-[22rem] lg:h-[30rem] xl:h-[36rem] w-auto mx-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.2)]"
               />
             </motion.div>
           </motion.div>
