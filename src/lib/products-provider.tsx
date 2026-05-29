@@ -12,11 +12,15 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api/products`)
+    const load = () => fetch(`${API}/api/products`, { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.products?.length) setProducts(data.products); })
       .catch(() => {})
       .finally(() => setLoading(false));
+    load();
+    // Retry after 5s in case Render was sleeping
+    const timer = setTimeout(load, 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   return <ProductsContext.Provider value={{ products, loading }}>{children}</ProductsContext.Provider>;
