@@ -176,7 +176,20 @@ export default function CheckoutPage() {
           <h1 className="font-display text-4xl font-light mb-3">Order Confirmed</h1>
           <p className="text-sm text-[var(--siliq-graphite)] mb-2">Thank you for your order!</p>
           <p className="text-xs tracking-wider uppercase text-[var(--siliq-accent)] mb-8">Order ID: <span className="text-[var(--siliq-black)] font-medium">{orderId}</span></p>
-          <p className="text-sm text-[var(--siliq-graphite)] max-w-md mb-8">We&apos;ve sent a confirmation email to <strong>{shipping.email || "your email"}</strong>. Your pieces are being prepared with care.</p>
+          <p className="text-sm text-[var(--siliq-graphite)] max-w-md mb-6">We&apos;ve sent a confirmation email to <strong>{shipping.email || "your email"}</strong>. Your pieces are being prepared with care.</p>
+          
+          {/* Rating */}
+          <div className="mb-8 p-6 bg-[var(--siliq-cream)] border border-[var(--siliq-line)] rounded-xl">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-[var(--siliq-graphite)] mb-4">How was your shopping experience?</p>
+            <div className="flex items-center justify-center gap-3">
+              {["😔", "😕", "😐", "🙂", "😍"].map((emoji, i) => (
+                <button key={i} onClick={() => { fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: orderId, shopRating: i + 1 }) }).catch(() => {}); }} className="text-2xl hover:scale-125 active:scale-110 transition-transform grayscale hover:grayscale-0 opacity-50 hover:opacity-100">
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <Link href="/shop" className="px-6 py-3 border border-[var(--siliq-black)] text-xs tracking-[0.2em] uppercase">Continue Shopping</Link>
             <button onClick={() => router.push("/")} className="px-6 py-3 bg-[var(--siliq-black)] text-white text-xs tracking-[0.2em] uppercase">Back Home</button>
