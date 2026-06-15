@@ -19,22 +19,25 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const SESSION_KEY = "siliq_session";
-const PASS_KEY = "siliq_passes"; // email->password map (local only for login verification)
-const API = process.env.NEXT_PUBLIC_API_URL || "https://siliq-api.onrender.com";
 
-function getPasswords(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(PASS_KEY) || "{}"); } catch { return {}; }
+function proxyFetch(endpoint: string, body?: unknown) {
+  return fetch("/api/proxy/", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint, method: "POST", body }),
+  });
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  // On mount, restore session from Render API
+  // On mount, restore session
   useEffect(() => {
     const email = typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
     if (!email) return;
-    fetch(`${API}/api/customers/${encodeURIComponent(email)}`)
+    fetch(`/api/proxy/`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: `/api/customers/${encodeURIComponent(email)}`, method: "GET", body: null }),
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.found && data.customer) {
@@ -46,15 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Check password locally
-    const passes = getPasswords();
-    if (!passes[email] || passes[email] !== password) return false;
-    // Fetch user data from Render
     try {
-      const res = await fetch(`${API}/api/customers/${encodeURIComponent(email)}`);
+      const res = await fetch("/api/auth/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", email, password }),
+      });
       if (!res.ok) return false;
-      const { found, customer: c } = await res.json();
-      if (!found) return false;
+      const { customer: c } = await res.json();
       localStorage.setItem(SESSION_KEY, email);
       setUser({ email: c.email, name: c.name || "", welcomeOfferUsed: (c.couponsUsed || []).includes("WELCOME10"), orders: c.orderHistory || [], addresses: c.addresses || [] });
       return true;
@@ -62,17 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
-    // Check if already exists locally
-    const passes = getPasswords();
-    if (passes[email]) return false;
-    // Create on Render API
     try {
-      const res = await fetch(`${API}/api/customers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, name }) });
+      const res = await fetch("/api/auth/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "signup", name, email, password }),
+      });
       if (!res.ok) return false;
       const { customer: c } = await res.json();
-      // Save password locally
-      passes[email] = password;
-      localStorage.setItem(PASS_KEY, JSON.stringify(passes));
       localStorage.setItem(SESSION_KEY, email);
       setUser({ email: c.email, name: c.name, welcomeOfferUsed: false, orders: [], addresses: [] });
       return true;
@@ -87,8 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const markWelcomeOfferUsed = useCallback(() => {
     if (!user) return;
     setUser(prev => prev ? { ...prev, welcomeOfferUsed: true } : null);
-    // Sync to Render
-    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/used-coupon`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "WELCOME10" }) }).catch(() => {});
+    proxyFetch(`/api/customers/${encodeURIComponent(user.email)}/used-coupon`, { code: "WELCOME10" }).catch(() => {});
   }, [user]);
 
   const addOrder = useCallback(async (order: Omit<Order, "id" | "date" | "status">) => {
@@ -101,14 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const newAddr: Address = { ...address, id: Date.now().toString() };
     setUser(prev => prev ? { ...prev, addresses: [...prev.addresses, newAddr] } : null);
-    // Sync to Render
-    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/address`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newAddr) }).catch(() => {});
+    proxyFetch(`/api/customers/${encodeURIComponent(user.email)}/address`, newAddr).catch(() => {});
   }, [user]);
 
   const deleteAddress = useCallback(async (id: string) => {
     if (!user) return;
     setUser(prev => prev ? { ...prev, addresses: prev.addresses.filter(a => a.id !== id) } : null);
-    fetch(`${API}/api/customers/${encodeURIComponent(user.email)}/address/${id}`, { method: "DELETE" }).catch(() => {});
+    fetch(`/api/proxy/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: `/api/customers/${encodeURIComponent(user.email)}/address/${id}`, method: "DELETE", body: null }) }).catch(() => {});
   }, [user]);
 
   return (

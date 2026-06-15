@@ -11,6 +11,7 @@ export function CookieConsent() {
   if (!show) return null;
 
   const accept = () => { localStorage.setItem("siliq_cookies_accepted", "true"); setShow(false); };
+  const decline = () => { localStorage.setItem("siliq_cookies_accepted", "declined"); setShow(false); };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[var(--siliq-line)] shadow-lg p-4 md:p-5">
@@ -23,7 +24,7 @@ export function CookieConsent() {
           <button onClick={accept} className="px-6 py-2.5 bg-[var(--siliq-black)] text-white text-xs tracking-[0.1em] uppercase hover:bg-[var(--siliq-charcoal)] transition-colors">
             Accept
           </button>
-          <button onClick={accept} className="px-6 py-2.5 border border-[var(--siliq-line)] text-xs tracking-[0.1em] uppercase hover:border-[var(--siliq-black)] transition-colors">
+          <button onClick={decline} className="px-6 py-2.5 border border-[var(--siliq-line)] text-xs tracking-[0.1em] uppercase hover:border-[var(--siliq-black)] transition-colors">
             Decline
           </button>
         </div>

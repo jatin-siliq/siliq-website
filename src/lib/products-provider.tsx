@@ -5,20 +5,20 @@ import { products as staticProducts, Product, categories, collections } from "@/
 type ProductsCtx = { products: Product[]; loading: boolean };
 const ProductsContext = createContext<ProductsCtx>({ products: staticProducts, loading: false });
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://siliq-product-manager-og.onrender.com";
-
 export function ProductsProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(staticProducts);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = () => fetch(`${API}/api/products`, { cache: "no-store" })
+    const load = () => fetch("/api/proxy/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: "/api/products", method: "GET", body: null }),
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.products?.length) setProducts(data.products); })
       .catch(() => {})
       .finally(() => setLoading(false));
     load();
-    // Retry after 5s in case Render was sleeping
     const timer = setTimeout(load, 5000);
     return () => clearTimeout(timer);
   }, []);

@@ -13,9 +13,9 @@ export function NewsletterForm({ variant = "dark" }: { variant?: Variant }) {
     e.preventDefault();
     if (!email || !email.includes("@")) return;
     setSubmitted(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/newsletter`, {
+    fetch("/api/proxy/", {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ endpoint: "/api/newsletter", method: "POST", body: { email } }),
     }).catch(() => {});
     showToast("Welcome to SILIQ Circle! Check your email for 10% off.");
     setEmail("");

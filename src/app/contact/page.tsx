@@ -45,9 +45,9 @@ export default function ContactPage() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      await fetch('https://api.web3forms.com/submit', {
+      await fetch('/api/proxy/', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_key: '96d66387-a679-4108-8a5e-910b85593842', name: form.firstName, email: form.email, phone: form.phone, subject: form.subject, message: form.message }),
+        body: JSON.stringify({ endpoint: '/api/contact', method: 'POST', body: { name: form.firstName, email: form.email, phone: form.phone, subject: form.subject, message: form.message } }),
       });
     } catch {}
     showToast("Message sent! We'll get back to you within 24 hours.");

@@ -29,31 +29,30 @@ export default function CheckoutPage() {
   const discountAmount = discount;
   const total = cartTotal - discountAmount + shippingCost;
 
+  const proxyFetch = async (endpoint: string, body?: unknown) => {
+    const res = await fetch("/api/proxy/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint, method: "POST", body }),
+    });
+    return res;
+  };
+
   const applyCoupon = async () => {
     setCouponError("");
     const code = coupon.toUpperCase();
-    // Check if customer already used this coupon
     if (shipping.email) {
       try {
-        const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${shipping.email}/can-use-coupon`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
-        });
+        const checkRes = await proxyFetch(`/api/customers/${shipping.email}/can-use-coupon`, { code });
         const checkData = await checkRes.json();
         if (!checkData.canUse) { setCouponError(checkData.message || "You've already used this coupon"); return; }
       } catch {}
     }
-    // WELCOME10 special handling for logged-in users
     if (code === "WELCOME10") {
       if (!isLoggedIn) { setCouponError("Please login to use this coupon"); return; }
       if (user?.welcomeOfferUsed) { setCouponError("You've already used your welcome offer"); return; }
     }
-    // Try validating against manager API (runs locally)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons/validate`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, orderTotal: cartTotal }),
-      });
+      const res = await proxyFetch("/api/coupons/validate", { code, orderTotal: cartTotal });
       const data = await res.json();
       if (data.valid) {
         setDiscount(data.discount);
@@ -62,7 +61,6 @@ export default function CheckoutPage() {
       }
       setCouponError(data.message || "Invalid coupon code");
     } catch {
-      // Fallback: if manager not running, only WELCOME10 works
       if (code === "WELCOME10" && isLoggedIn && !user?.welcomeOfferUsed) {
         setDiscount(Math.round(cartTotal * 0.1));
         showToast("10% welcome discount applied!");
@@ -76,6 +74,18 @@ export default function CheckoutPage() {
     setPlacing(true);
     const id = "SILIQ-" + Date.now().toString().slice(-6);
 
+    // Create order on server (prevents amount manipulation)
+    let razorpayOrderId: string;
+    try {
+      const orderRes = await fetch("/api/payment/", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", amount: total * 100, orderId: id }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) { showToast("Payment setup failed. Try again.", "error"); setPlacing(false); return; }
+      razorpayOrderId = orderData.order_id;
+    } catch { showToast("Payment setup failed. Try again.", "error"); setPlacing(false); return; }
+
     // Load Razorpay script if not loaded
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(window as any).Razorpay) {
@@ -87,61 +97,47 @@ export default function CheckoutPage() {
 
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY!,
-      amount: total * 100, // Razorpay takes amount in paise
+      amount: total * 100,
       currency: "INR",
       name: "SILIQ",
       description: `Order ${id} — ${cart.reduce((s, i) => s + i.quantity, 0)} item(s)`,
       image: "/logo/siliq-black.png",
+      order_id: razorpayOrderId,
       prefill: {
         name: `${shipping.firstName} ${shipping.lastName}`,
         email: shipping.email,
         contact: shipping.phone,
       },
       theme: { color: "#0A0A0A" },
-      handler: async (response: { razorpay_payment_id: string }) => {
-        // Payment successful
+      handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+        // Verify payment on server
+        const verifyRes = await fetch("/api/payment/", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "verify", razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature }),
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyData.verified) { showToast("Payment verification failed!", "error"); setPlacing(false); return; }
+
+        // Payment verified — proceed
         setOrderId(id);
         if (discount > 0 && coupon.toUpperCase() === "WELCOME10") markWelcomeOfferUsed();
         if (isLoggedIn) {
           addOrder({ total, items: cart.reduce((s, i) => s + i.quantity, 0) });
-          // Save address for future use
           saveAddress({ label: "Home", firstName: shipping.firstName, lastName: shipping.lastName, email: shipping.email, phone: shipping.phone, address: shipping.address, address2: shipping.address2, city: shipping.city, state: shipping.state, pincode: shipping.pincode });
         }
-        // Send order to manager (if running)
+        // Sync to backend via proxy
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id, total, items: cart.map(i => ({ productName: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size })),
-              paymentId: response.razorpay_payment_id,
-              customer: { name: `${shipping.firstName} ${shipping.lastName}`, email: shipping.email, phone: shipping.phone },
-              shipping, coupon: discount > 0 ? coupon.toUpperCase() : null,
-            }),
+          await proxyFetch("/api/orders", {
+            id, total, items: cart.map(i => ({ productName: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size })),
+            paymentId: response.razorpay_payment_id, customer: { name: `${shipping.firstName} ${shipping.lastName}`, email: shipping.email, phone: shipping.phone },
+            shipping, coupon: discount > 0 ? coupon.toUpperCase() : null,
           });
-          if (discount > 0) await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons/use/${coupon.toUpperCase()}`, { method: "POST" });
-          // Reduce inventory stock
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inventory/reduce`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: cart.map(i => ({ sku: i.product.id, quantity: i.quantity })) }),
-          });
-          // Sync customer data
-          const customerEmail = shipping.email;
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: customerEmail, name: `${shipping.firstName} ${shipping.lastName}`, phone: shipping.phone }),
-          });
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/address`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ label: "Home", firstName: shipping.firstName, lastName: shipping.lastName, phone: shipping.phone, address: shipping.address, address2: shipping.address2, city: shipping.city, state: shipping.state, pincode: shipping.pincode }),
-          });
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/order`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ total }),
-          });
-          if (discount > 0) await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/customers/${customerEmail}/used-coupon`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: coupon.toUpperCase() }),
-          });
+          if (discount > 0) await proxyFetch(`/api/coupons/use/${coupon.toUpperCase()}`, {});
+          await proxyFetch("/api/inventory/reduce", { items: cart.map(i => ({ sku: i.product.id, quantity: i.quantity })) });
+          await proxyFetch("/api/customers", { email: shipping.email, name: `${shipping.firstName} ${shipping.lastName}`, phone: shipping.phone });
+          await proxyFetch(`/api/customers/${shipping.email}/address`, { label: "Home", firstName: shipping.firstName, lastName: shipping.lastName, phone: shipping.phone, address: shipping.address, address2: shipping.address2, city: shipping.city, state: shipping.state, pincode: shipping.pincode });
+          await proxyFetch(`/api/customers/${shipping.email}/order`, { total });
+          if (discount > 0) await proxyFetch(`/api/customers/${shipping.email}/used-coupon`, { code: coupon.toUpperCase() });
         } catch {}
         setStep(3);
         clearCart();
@@ -183,7 +179,7 @@ export default function CheckoutPage() {
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-[var(--siliq-graphite)] mb-4">How was your shopping experience?</p>
             <div className="flex items-center justify-center gap-3">
               {["😔", "😕", "😐", "🙂", "😍"].map((emoji, i) => (
-                <button key={i} onClick={() => { fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: orderId, shopRating: i + 1 }) }).catch(() => {}); }} className="text-2xl hover:scale-125 active:scale-110 transition-transform grayscale hover:grayscale-0 opacity-50 hover:opacity-100">
+                <button key={i} onClick={() => { fetch("/api/proxy/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: "/api/orders", method: "PUT", body: { id: orderId, shopRating: i + 1 } }) }).catch(() => {}); }} className="text-2xl hover:scale-125 active:scale-110 transition-transform grayscale hover:grayscale-0 opacity-50 hover:opacity-100">
                   {emoji}
                 </button>
               ))}
